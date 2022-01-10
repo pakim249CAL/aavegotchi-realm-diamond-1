@@ -10,12 +10,17 @@ library LibAlchemica {
     AppStorage storage s = LibAppStorage.diamondStorage();
 
     uint256 capacity = s.parcels[_tokenId].reservoirCapacity[_alchemicaType];
+
     uint256 alchemicaSinceUpdate = alchemicaSinceLastUpdate(_tokenId, _alchemicaType);
 
-    if (alchemicaSinceUpdate > capacity) {
-      s.parcels[_tokenId].unclaimedAlchemica[_alchemicaType] = capacity;
-    } else {
-      s.parcels[_tokenId].unclaimedAlchemica[_alchemicaType] += alchemicaSinceUpdate;
+    if (alchemicaSinceUpdate > 0) {
+      //Cannot settle more than capacity
+      if (alchemicaSinceUpdate > capacity) {
+        s.parcels[_tokenId].unclaimedAlchemica[_alchemicaType] = capacity;
+      } else {
+        //Increment alchemica
+        s.parcels[_tokenId].unclaimedAlchemica[_alchemicaType] += alchemicaSinceUpdate;
+      }
     }
 
     s.parcels[_tokenId].lastUpdateTimestamp[_alchemicaType] = block.timestamp;
@@ -24,7 +29,10 @@ library LibAlchemica {
   function alchemicaSinceLastUpdate(uint256 _tokenId, uint256 _alchemicaType) internal view returns (uint256) {
     AppStorage storage s = LibAppStorage.diamondStorage();
 
-    return s.parcels[_tokenId].alchemicaHarvestRate[_alchemicaType] * (block.timestamp - s.parcels[_tokenId].lastUpdateTimestamp[_alchemicaType]);
+    uint256 amount = s.parcels[_tokenId].alchemicaHarvestRate[_alchemicaType] *
+      (block.timestamp - s.parcels[_tokenId].lastUpdateTimestamp[_alchemicaType]);
+
+    return amount;
   }
 
   function increaseTraits(uint256 _realmId, uint256 _installationId) internal {
@@ -82,6 +90,10 @@ library LibAlchemica {
 
       if (s.parcels[_realmId].unclaimedAlchemica[alchemicaType] > s.parcels[_realmId].reservoirCapacity[alchemicaType]) {
         //@todo: test harvesting and then unequipping
+
+        //step 1 - unequip all harvesters
+        //step 2 - claim alchemica balance
+        //step 3 - unequip reservoir
         revert("LibAlchemica: Unclaimed alchemica greater than reservoir capacity");
       }
     }

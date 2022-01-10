@@ -1,4 +1,13 @@
 import { BigNumberish } from "@ethersproject/bignumber";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import {
+  AlchemicaFacet,
+  AlchemicaToken,
+  ERC1155Facet,
+  GLMR,
+  InstallationFacet,
+  RealmFacet,
+} from "./typechain";
 
 export interface AxiosMetadataResponse {
   data: ParcelMetadata[];
@@ -41,8 +50,7 @@ export interface UpgradeQueue {
   parcelId: BigNumberish;
   coordinateX: BigNumberish;
   coordinateY: BigNumberish;
-  prevInstallationId: BigNumberish;
-  nextInstallationId: BigNumberish;
+  installationId: BigNumberish;
   readyBlock: BigNumberish;
   claimed: boolean;
   owner: string;
@@ -63,4 +71,62 @@ export interface InstallationType {
   craftTime: BigNumberish;
   nextLevelId: BigNumberish;
   prerequisites: BigNumberish[];
+}
+
+export interface InstallationTypeInput {
+  deprecated: boolean;
+  installationType: number;
+  level: Level;
+  width: Width;
+  height: Height;
+  alchemicaType: 0 | 1 | 2 | 3;
+  alchemicaCost: BigNumberish[];
+  harvestRate: BigNumberish;
+  capacity: BigNumberish;
+  spillRadius: BigNumberish;
+  spillRate: BigNumberish;
+  craftTime: number;
+  nextLevelId: number;
+  prerequisites: number[];
+}
+
+export type Level = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+export type Width = 1 | 2 | 3 | 4;
+export type Height = 1 | 2 | 3 | 4;
+export interface InstallationTypeOutput {
+  deprecated: boolean;
+  installationType: BigNumberish;
+  level: Level;
+  width: Width;
+  height: Height;
+  alchemicaType: BigNumberish;
+  alchemicaCost: BigNumberish[];
+  harvestRate: BigNumberish;
+  capacity: BigNumberish;
+  spillRadius: BigNumberish;
+  spillRate: BigNumberish;
+  craftTime: BigNumberish;
+  nextLevelId: BigNumberish;
+  prerequisites: BigNumberish[];
+}
+
+export type AlchemicaTotals = [
+  [BigNumberish, BigNumberish, BigNumberish, BigNumberish]
+];
+
+//Test
+
+export interface TestBeforeVars {
+  alchemicaFacet: AlchemicaFacet;
+  realmFacet: RealmFacet;
+  installationDiamond: InstallationFacet;
+  ownerAddress: string;
+  installationsAddress: string;
+  fud: AlchemicaToken;
+  fomo: AlchemicaToken;
+  alpha: AlchemicaToken;
+  kek: AlchemicaToken;
+  glmr: GLMR;
+  erc1155Facet: ERC1155Facet;
+  installationOwner: string;
 }

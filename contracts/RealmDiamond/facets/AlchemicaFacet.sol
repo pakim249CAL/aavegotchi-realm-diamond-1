@@ -11,7 +11,7 @@ import "../../interfaces/AavegotchiDiamond.sol";
 import "../../test/AlchemicaToken.sol";
 import "hardhat/console.sol";
 
-uint256 constant bp = 100000000000000000000; // 100 ether in wei //@todo: maybe change this to 10e18?
+uint256 constant bp = 100 ether;
 
 contract AlchemicaFacet is Modifiers {
   event AlchemicaClaimed(
@@ -30,6 +30,8 @@ contract AlchemicaFacet is Modifiers {
     uint256 _spilloverRate,
     uint256 _spilloverRadius
   );
+
+  event ExitAlchemica(uint256 indexed _gotchiId, uint256[] _alchemica);
 
   /// @notice Allow the diamond owner to set the alchemica addresses
   /// @param _addresses An array containing the alchemica token addresses
@@ -266,11 +268,12 @@ contract AlchemicaFacet is Modifiers {
   function alchemicaRecipient(uint256 _gotchiId) internal view returns (address) {
     //@note: isAavegotchiLent() function does not yet exist in Aavegotchi Diamond
     AavegotchiDiamond diamond = AavegotchiDiamond(s.aavegotchiDiamond);
-    if (diamond.isAavegotchiLent(_gotchiId)) {
-      return diamond.gotchiEscrow(_gotchiId);
-    } else {
-      return diamond.ownerOf(_gotchiId);
-    }
+    // if (diamond.isAavegotchiLent(_gotchiId)) {
+    //   return diamond.gotchiEscrow(_gotchiId);
+    // } else {
+    //   return diamond.ownerOf(_gotchiId);
+    // }
+    return diamond.ownerOf(_gotchiId);
   }
 
   function gotchiOwner(uint256 _gotchiId) internal view returns (address) {}
@@ -303,7 +306,6 @@ contract AlchemicaFacet is Modifiers {
 
     AlchemicaToken alchemica = AlchemicaToken(s.alchemicaAddresses[_alchemicaType]);
 
-    //@todo: write tests to check spillover is accurate
     SpilloverIO memory spillover = calculateSpilloverForReservoir(_realmId, _alchemicaType);
 
     TransferAmounts memory amounts = calculateTransferAmounts(available, spillover.rate);
@@ -327,11 +329,9 @@ contract AlchemicaFacet is Modifiers {
     uint256 _lastChanneled,
     bytes memory _signature
   ) external onlyParcelOwner(_realmId) onlyGotchiOwner(_gotchiId) {
-    //@todo: write tests to check spillover is accurate
+    //@todo: test - enforce duration (once per parcel per 24 hrs)
 
-    //@todo: test enforce duration (once per parcel per 24 hrs)
-
-    require(_lastChanneled == s.parcels[_realmId].gotchiChannelings[_gotchiId], "AlchemicaFacet: Incorrect last duration");
+    require(_lastChanneled == s.gotchiChannelings[_gotchiId], "AlchemicaFacet: Incorrect last duration");
 
     require(block.timestamp - _lastChanneled >= 1 days, "AlchemicaFacet: Can't channel yet");
 
@@ -346,6 +346,8 @@ contract AlchemicaFacet is Modifiers {
       AlchemicaToken alchemica = AlchemicaToken(s.alchemicaAddresses[i]);
 
       //Mint new tokens if the Great Portal Balance is less than capacity
+
+      //@todo: test minting new tokens vs. transferring
       if (alchemica.balanceOf(s.greatPortalDiamond) < s.greatPortalCapacity[i]) {
         TransferAmounts memory amounts = calculateTransferAmounts(channelAmounts[i], spillover.rate);
 
@@ -360,7 +362,7 @@ contract AlchemicaFacet is Modifiers {
     }
 
     //update latest channeling
-    s.parcels[_realmId].gotchiChannelings[_gotchiId] = block.timestamp;
+    s.gotchiChannelings[_gotchiId] = block.timestamp;
 
     emit ChannelAlchemica(_realmId, _gotchiId, channelAmounts, spillover.rate, spillover.radius);
   }
@@ -388,5 +390,7 @@ contract AlchemicaFacet is Modifiers {
       AlchemicaToken alchemica = AlchemicaToken(s.alchemicaAddresses[i]);
       alchemica.transferFrom(s.greatPortalDiamond, alchemicaRecipient(_gotchiId), _alchemica[i]);
     }
+
+    emit ExitAlchemica(_gotchiId, _alchemica);
   }
 }

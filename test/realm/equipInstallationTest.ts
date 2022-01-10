@@ -96,10 +96,10 @@ describe("Testing Equip Installation", async function () {
       height: 2,
       alchemicaType: 0,
       alchemicaCost: [
-        ethers.utils.parseEther("1"),
-        ethers.utils.parseEther("2"),
+        ethers.utils.parseEther("0.01"),
+        ethers.utils.parseEther("0.2"),
         0,
-        ethers.utils.parseEther("3"),
+        ethers.utils.parseEther("0.03"),
       ],
       harvestRate: 2,
       capacity: 0,
@@ -117,10 +117,10 @@ describe("Testing Equip Installation", async function () {
       height: 4,
       alchemicaType: 4,
       alchemicaCost: [
-        ethers.utils.parseEther("4"),
-        ethers.utils.parseEther("5"),
-        ethers.utils.parseEther("6"),
-        0,
+        ethers.utils.parseEther("0.04"),
+        ethers.utils.parseEther("0.05"),
+        ethers.utils.parseEther("0.06"),
+        ethers.utils.parseEther("0.06"),
       ],
       harvestRate: 0,
       capacity: 50000,
@@ -135,7 +135,7 @@ describe("Testing Equip Installation", async function () {
     installationsTypes = await installationFacet.getInstallationTypes([]);
     expect(installationsTypes.length).to.equal(installations.length);
   });
-  it("Craft installations", async function () {
+  it("Can craft installations", async function () {
     ghst = await impersonate(testAddress, ghst, ethers, network);
     installationFacet = await impersonate(
       testAddress,
@@ -147,6 +147,10 @@ describe("Testing Equip Installation", async function () {
       installationsAddress,
       ethers.utils.parseUnits("1000000000")
     );
+
+    const balance = await ghst.balanceOf(testAddress);
+    console.log("balance:", balance.toString());
+
     await installationFacet.craftInstallations([1, 1, 1]);
     await expect(installationFacet.claimInstallations([0])).to.be.revertedWith(
       "InstallationFacet: installation not ready"
@@ -163,7 +167,7 @@ describe("Testing Equip Installation", async function () {
     expect(itemTypes.length).to.equal(2);
   });
 
-  it("Equip installation", async function () {
+  it("Can equip installation", async function () {
     realmFacet = await impersonate(testAddress, realmFacet, ethers, network);
     await realmFacet.equipInstallation(2893, 1, 2, 2);
     await expect(
@@ -190,7 +194,8 @@ describe("Testing Equip Installation", async function () {
       realmFacet.equipInstallation(2893, 1, 18, 18)
     ).to.be.revertedWith("LibItems: Doesn't have that many to transfer");
   });
-  it("Unequip installaton", async function () {
+
+  it("Should receive 50% of installation cost after unequipping", async function () {
     // await installationFacet.craftInstallations([1]);
     const installationType = await installationFacet.getInstallationType("1");
     const alchemicaCost = installationType.alchemicaCost;
