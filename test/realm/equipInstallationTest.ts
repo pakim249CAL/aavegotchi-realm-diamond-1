@@ -14,6 +14,7 @@ import {
 import { upgrade } from "../../scripts/realm/upgrades/upgrade-harvesting";
 import { InstallationType } from "../../types";
 import { deployDiamond } from "../../scripts/installation/deploy";
+import { BigNumber } from "ethers";
 
 describe("Testing Equip Installation", async function () {
   const testAddress = "0xC99DF6B7A5130Dce61bA98614A2457DAA8d92d1c";
@@ -94,7 +95,12 @@ describe("Testing Equip Installation", async function () {
       width: 2,
       height: 2,
       alchemicaType: 0,
-      alchemicaCost: [1, 2, 0, 3],
+      alchemicaCost: [
+        ethers.utils.parseEther("1"),
+        ethers.utils.parseEther("2"),
+        0,
+        ethers.utils.parseEther("3"),
+      ],
       harvestRate: 2,
       capacity: 0,
       spillRadius: 0,
@@ -110,7 +116,12 @@ describe("Testing Equip Installation", async function () {
       width: 4,
       height: 4,
       alchemicaType: 4,
-      alchemicaCost: [4, 5, 6, 0],
+      alchemicaCost: [
+        ethers.utils.parseEther("4"),
+        ethers.utils.parseEther("5"),
+        ethers.utils.parseEther("6"),
+        0,
+      ],
       harvestRate: 0,
       capacity: 50000,
       spillRadius: 100,
@@ -149,7 +160,6 @@ describe("Testing Equip Installation", async function () {
     expect(balancePost).to.above(balancePre);
 
     const itemTypes = await installationFacet.getInstallationTypes(["0", "1"]);
-    console.log("item types:", itemTypes);
     expect(itemTypes.length).to.equal(2);
   });
 
@@ -181,36 +191,14 @@ describe("Testing Equip Installation", async function () {
     ).to.be.revertedWith("LibItems: Doesn't have that many to transfer");
   });
   it("Unequip installaton", async function () {
-    await installationFacet.craftInstallations([1]);
-    for (let i = 0; i < 11000; i++) {
-      ethers.provider.send("evm_mine", []);
-    }
-    await installationFacet.claimInstallations([3]);
-    await expect(
-      realmFacet.equipInstallation(2893, 1, 1, 1)
-    ).to.be.revertedWith("LibRealm: Invalid spot");
-    await expect(
-      realmFacet.equipInstallation(2893, 1, 2, 1)
-    ).to.be.revertedWith("LibRealm: Invalid spot");
-    await expect(
-      realmFacet.equipInstallation(2893, 1, 2, 2)
-    ).to.be.revertedWith("LibRealm: Invalid spot");
-    await expect(
-      realmFacet.equipInstallation(2893, 1, 3, 3)
-    ).to.be.revertedWith("LibRealm: Invalid spot");
+    // await installationFacet.craftInstallations([1]);
+    const installationType = await installationFacet.getInstallationType("1");
+    const alchemicaCost = installationType.alchemicaCost;
+    const totalCost = alchemicaCost.reduce((a, b) => a.add(b), BigNumber.from(0));
+    const refund = totalCost.div(2);
+    const beforeBalance = await ghst.balanceOf(testAddress);
     await realmFacet.unequipInstallation(2893, 1, 2, 2);
-    await realmFacet.equipInstallation(2893, 1, 2, 2);
-    await expect(
-      realmFacet.equipInstallation(2893, 1, 1, 1)
-    ).to.be.revertedWith("LibRealm: Invalid spot");
-    await expect(
-      realmFacet.equipInstallation(2893, 1, 2, 1)
-    ).to.be.revertedWith("LibRealm: Invalid spot");
-    await expect(
-      realmFacet.equipInstallation(2893, 1, 2, 2)
-    ).to.be.revertedWith("LibRealm: Invalid spot");
-    await expect(
-      realmFacet.equipInstallation(2893, 1, 3, 3)
-    ).to.be.revertedWith("LibRealm: Invalid spot");
+    const afterBalance = await ghst.balanceOf(testAddress);
+    expect(afterBalance).to.equal(beforeBalance.add(refund));
   });
 });

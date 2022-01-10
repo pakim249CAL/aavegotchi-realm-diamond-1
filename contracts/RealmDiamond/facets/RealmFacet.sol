@@ -107,7 +107,9 @@ contract RealmFacet is Modifiers {
 
       //@todo: include upgrades in refund?
       uint256 alchemicaRefund = installation.alchemicaCost[i] / 2;
-      alchemica.transfer(msg.sender, alchemicaRefund);
+
+      alchemica.approve(address(this), alchemicaRefund);
+      alchemica.transferFrom(address(this), msg.sender, alchemicaRefund);
     }
     InstallationDiamondInterface(s.installationsDiamond).unequipInstallation(msg.sender, _realmId, _installationId);
 
