@@ -189,14 +189,14 @@ task(
             functionSelectors: newSelectors,
           });
         }
-
+/*
         //Always replace the existing selectors to prevent duplications
         if (existingSelectors.length > 0)
           cut.push({
             facetAddress: deployedFacet.address,
             action: FacetCutAction.Replace,
             functionSelectors: existingSelectors,
-          });
+          });*/
 
         if (removeSelectors.length > 0) {
           console.log("Removing selectors:", removeSelectors);

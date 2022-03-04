@@ -46,6 +46,7 @@ export async function upgrade(
         "function getRoundBaseAlchemica(uint256 _realmId, uint256 _roundId) external view returns (uint256[] memory)",
         "function getLastChanneled(uint256 _gotchiId) public view returns (uint256)",
         "function getAlchemicaAddresses() external view returns (address[4] memory)",
+        "function batchTransferAlchemica(address[] calldata _targets, uint256[4][] calldata _amounts) external",
       ],
       removeSelectors: [],
     },
@@ -104,9 +105,9 @@ export async function upgrade(
 
   const args: DeployUpgradeTaskArgs = {
     diamondUpgrader: diamondUpgrader,
-    diamondAddress: maticDiamondAddress,
+    diamondAddress: installationDiamond,
     facetsAndAddSelectors: joined,
-    initAddress: maticDiamondAddress,
+    initAddress: installationDiamond,
     initCalldata: calldata,
     useLedger: false,
     useMultisig: false,

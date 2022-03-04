@@ -271,7 +271,8 @@ export async function beforeTest(
 ): Promise<TestBeforeVars> {
   const installationsAddress = await deployDiamond();
 
-  const alchemica = await deployAlchemica(ethers, diamondAddress);
+  const alchemica = await deployAlchemica(ethers, installationsAddress);
+  console.log("Alchemica deployed");
 
   const fud = alchemica.fud;
   const fomo = alchemica.fomo;
@@ -286,14 +287,15 @@ export async function beforeTest(
     kek: alchemica.kek.address,
     glmr: alchemica.glmr.address,
   });
+  console.log("upgrades complete");
 
   const alchemicaFacet = (await ethers.getContractAt(
     "AlchemicaFacet",
-    diamondAddress
+    installationsAddress
   )) as AlchemicaFacet;
   const realmFacet = (await ethers.getContractAt(
     "RealmFacet",
-    diamondAddress
+    installationsAddress
   )) as RealmFacet;
   const installationDiamond = (await ethers.getContractAt(
     "InstallationFacet",
@@ -307,7 +309,7 @@ export async function beforeTest(
 
   const ownershipFacet = (await ethers.getContractAt(
     "OwnershipFacet",
-    diamondAddress
+    installationsAddress
   )) as OwnershipFacet;
   const ownerAddress = await ownershipFacet.owner();
 
@@ -317,12 +319,14 @@ export async function beforeTest(
   )) as OwnershipFacet;
   const installationOwner = await installationOwnershipFacet.owner();
 
+  console.log("facets assigned");
   await installationDiamond.setAddresses(
     maticAavegotchiDiamondAddress,
-    diamondAddress,
+    installationsAddress,
     glmr.address
   );
 
+  console.log("installation addresses set");
   return {
     alchemicaFacet,
     installationsAddress,
